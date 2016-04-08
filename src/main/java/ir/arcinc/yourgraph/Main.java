@@ -19,8 +19,8 @@ public class Main {
             }
         });
 
-        INeo4jConnection connection = new Neo4jEmbed();
-//        INeo4jConnection connection = new Neo4jJDBC();
+//        INeo4jConnection connection = new Neo4jEmbed();
+        INeo4jConnection connection = new Neo4jJDBC();
 
         BlockingQueue<String> queue = new LinkedBlockingQueue<>();
         PostHTMLExporter exporter = new PostHTMLExporter(connection);

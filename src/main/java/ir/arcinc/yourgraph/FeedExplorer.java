@@ -53,7 +53,6 @@ public class FeedExplorer extends AbstractExplorer {
         updateUser(users);
 
         end();
-        logger.info("Done adding newsfeed data.");
     }
 
     protected void end() {
@@ -66,7 +65,7 @@ public class FeedExplorer extends AbstractExplorer {
     }
 
     protected void updateUser(List<UserInfoData> users) {
-        users.forEach(this::updateUser);
+        users.parallelStream().forEach(this::updateUser);
     }
 
     protected List<UserInfoData> getPostingUsers(List<MediaFeedData> posts) throws InstagramException {

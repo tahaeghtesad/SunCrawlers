@@ -16,11 +16,15 @@ public abstract class INeo4jConnection implements Runnable, AutoCloseable{
     protected LinkedBlockingQueue<String> queries = new LinkedBlockingQueue<>();
     protected Thread queryRunner = new Thread(this,"Query Runner");
     protected Thread queryNotifier =  new Thread(()->{
+        int lastNo = 0;
         //noinspection InfiniteLoopStatement
         while (true) {
             try {
                 Thread.sleep(30 * 1000, 0);
-                logger.info("Queries remaining: " + queries.size());
+                if (lastNo != queries.size()) {
+                    logger.info("Queries remaining: " + queries.size());
+                    lastNo = queries.size();
+                }
             } catch (InterruptedException e) {
                 logger.error(e.getMessage());
             }
