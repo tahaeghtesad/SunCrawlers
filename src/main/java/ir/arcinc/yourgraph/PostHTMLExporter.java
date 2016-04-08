@@ -1,6 +1,5 @@
 package ir.arcinc.yourgraph;
 
-import org.neo4j.graphdb.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +23,7 @@ public class PostHTMLExporter implements Runnable{
         thisThread.start();
     }
 
-    public void saveUserPosts(String username){
+    public void saveUserPostsAsync(String username){
         try {
             queue.put(username);
         } catch (InterruptedException e) {
@@ -38,26 +37,30 @@ public class PostHTMLExporter implements Runnable{
         while (true) {
             try {
                 String username = queue.take();
-                List<Map<String, Object>> urls = connection.execute("match ({username:'" + username + "'})-[r:Posted]->(p:Post{type:'image'}) return p.url;");
-
-                try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File("user_posts\\" + username + ".html")), "UTF-8"))) {
-                    out.println(
-                            "<!DOCTYPE HTML>" +
-                                    "<html>" +
-                                    "<head><meta charset=\"UTF-8\"/></head>" +
-                                    "<body>");
-
-                    for (Map<String, Object> row : urls) {
-                        out.println("<img src=\"" + row.get("p.url") + "\" />");
-                    }
-
-                    out.println("</body></html>");
-                } catch (FileNotFoundException | UnsupportedEncodingException e) {
-                    logger.error(e.getMessage());
-                }
-            } catch (InterruptedException e) {
+                saveUserPosts(username);
+            } catch (InterruptedException e){
                 logger.error(e.getMessage());
             }
         }
+    }
+
+    public void saveUserPosts(String username){
+            List<Map<String, Object>> urls = connection.execute("match ({username:'" + username + "'})-[r:Posted]->(p:Post{type:'image'}) return p.url;");
+
+            try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File("user_posts\\" + username + ".html")), "UTF-8"))) {
+                out.println(
+                        "<!DOCTYPE HTML>" +
+                                "<html>" +
+                                "<head><meta charset=\"UTF-8\"/></head>" +
+                                "<body>");
+
+                for (Map<String, Object> row : urls) {
+                    out.println("<img src=\"" + row.get("p.url") + "\" />");
+                }
+
+                out.println("</body></html>");
+            } catch (FileNotFoundException | UnsupportedEncodingException e) {
+                logger.error(e.getMessage());
+            }
     }
 }
