@@ -2,17 +2,16 @@ package ir.arcinc.yourgraph;
 
 import org.jinstagram.Instagram;
 import org.jinstagram.entity.comments.CommentData;
-import org.jinstagram.entity.common.Pagination;
 import org.jinstagram.entity.common.User;
 import org.jinstagram.entity.users.basicinfo.UserInfoData;
-import org.jinstagram.entity.users.feed.MediaFeed;
 import org.jinstagram.entity.users.feed.MediaFeedData;
 import org.jinstagram.exceptions.InstagramException;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by tahae on 3/29/2016.

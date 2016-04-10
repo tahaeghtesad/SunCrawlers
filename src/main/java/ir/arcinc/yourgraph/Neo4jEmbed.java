@@ -20,7 +20,6 @@ public class Neo4jEmbed extends INeo4jConnection {
     final private GraphDatabaseService db;
 
     public Neo4jEmbed() {
-        super();
         logger = LoggerFactory.getLogger(Neo4jEmbed.class.getName());
         try {
             db = new GraphDatabaseFactory()

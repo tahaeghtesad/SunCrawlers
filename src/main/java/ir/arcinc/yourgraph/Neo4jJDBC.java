@@ -16,8 +16,7 @@ public class Neo4jJDBC extends INeo4jConnection {
 
     private Connection connection = null;
 
-    public Neo4jJDBC() {
-        super();
+    public Neo4jJDBC() throws SQLException {
         logger = LoggerFactory.getLogger(Neo4jJDBC.class.getName());
         try {
             Class.forName("org.neo4j.jdbc.Driver");
@@ -31,7 +30,7 @@ public class Neo4jJDBC extends INeo4jConnection {
 
             queryRunner.start();
 
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (ClassNotFoundException e) {
             logger.error(e.getMessage());
         }
     }
