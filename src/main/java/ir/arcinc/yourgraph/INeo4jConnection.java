@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -13,27 +14,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 public abstract class INeo4jConnection implements Runnable, AutoCloseable{
 
     protected Logger logger = LoggerFactory.getLogger(Neo4jEmbed.class.getName());
-    protected LinkedBlockingQueue<String> queries = new LinkedBlockingQueue<>();
+    protected BlockingQueue<String> queries = new LoggingLinkedBlockingQueue<>();
     protected Thread queryRunner = new Thread(this,"Query Runner");
-    protected Thread queryNotifier =  new Thread(()->{
-        int lastNo = 0;
-        //noinspection InfiniteLoopStatement
-        while (true) {
-            try {
-                Thread.sleep(30 * 1000, 0);
-                if (lastNo != queries.size()) {
-                    logger.info("Queries remaining: " + queries.size());
-                    lastNo = queries.size();
-                }
-            } catch (InterruptedException e) {
-                logger.error(e.getMessage());
-            }
-        }
-    },"Query Notifier");
-
-    protected INeo4jConnection(){
-        queryNotifier.start();
-    }
 
     public abstract List<Map<String, Object>> execute(String query);
 

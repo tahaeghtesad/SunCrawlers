@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -14,7 +15,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class PostHTMLExporter implements Runnable{
 
     private INeo4jConnection connection;
-    private LinkedBlockingQueue<String> queue = new LinkedBlockingQueue<>();
+    private BlockingQueue<String> queue = new LoggingLinkedBlockingQueue<>();
     private Logger logger = LoggerFactory.getLogger(PostHTMLExporter.class.getName());
 
     public PostHTMLExporter(INeo4jConnection connection) {
