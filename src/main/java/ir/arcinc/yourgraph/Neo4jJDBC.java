@@ -15,6 +15,7 @@ import java.util.*;
 public class Neo4jJDBC extends INeo4jConnection {
 
     private Connection connection = null;
+    private Thread queryRunner = new Thread(this,"Query Runner");
 
     public Neo4jJDBC() throws SQLException {
         logger = LoggerFactory.getLogger(Neo4jJDBC.class.getName());
@@ -65,6 +66,7 @@ public class Neo4jJDBC extends INeo4jConnection {
     public void close() {
         try {
             connection.close();
+            queryRunner.stop();
         } catch (SQLException e) {
             logger.error(e.getMessage());
         }
@@ -84,7 +86,6 @@ public class Neo4jJDBC extends INeo4jConnection {
                 }
             } catch (InterruptedException | RuntimeException e) {
                 logger.error(e.getMessage());
-                e.printStackTrace();
             }
         }
     }

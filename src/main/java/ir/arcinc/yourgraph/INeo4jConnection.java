@@ -15,7 +15,6 @@ public abstract class INeo4jConnection implements Runnable, AutoCloseable{
 
     protected Logger logger = LoggerFactory.getLogger(Neo4jEmbed.class.getName());
     protected BlockingQueue<String> queries = new LoggingLinkedBlockingQueue<>();
-    protected Thread queryRunner = new Thread(this,"Query Runner");
 
     public abstract List<Map<String, Object>> execute(String query);
 
@@ -26,4 +25,7 @@ public abstract class INeo4jConnection implements Runnable, AutoCloseable{
             logger.error(e.getMessage());
         }
     }
+
+    @Override
+    public abstract void run();
 }

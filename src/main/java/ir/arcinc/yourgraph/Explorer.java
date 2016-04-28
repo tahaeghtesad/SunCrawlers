@@ -9,6 +9,9 @@ import org.jinstagram.entity.users.feed.UserFeedData;
 import org.jinstagram.exceptions.InstagramRateLimitException;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
@@ -21,8 +24,6 @@ public class Explorer extends AbstractExplorer{
         this.queue = queue;
     }
 
-    private String topUsername;
-
     private UserInfoData top;
     private List<UserFeedData> followings = new LinkedList<>();
     private List<UserFeedData> followers = new LinkedList<>();
@@ -33,7 +34,7 @@ public class Explorer extends AbstractExplorer{
     @Override
     protected void getData() {
         try {
-            topUsername = queue.take();
+            String topUsername = queue.take();
 
             logger.info("Finding user: " + topUsername);
 
@@ -46,17 +47,11 @@ public class Explorer extends AbstractExplorer{
 
             logger.info("Getting user data: " + top.getUsername());
 
-            if (top.getCounts().getFollowedBy() < top.getCounts().getFollows()) {
-                followings = top.getCounts().getFollows() > 1300 ? Collections.emptyList() : getFollowings(topId);
-                followers = top.getCounts().getFollowedBy() > 1300 ? Collections.emptyList() : getFollowers(topId);
-                posts = top.getCounts().getMedia() > 500 ? Collections.emptyList() : getPosts(topId);
-//            followings = getFollowings(topId);
-//            followers = getFollowers(topId);
-//            posts = getPosts(topId);
-                likes = getLikes(posts);
-                comments = getComments(posts);
-            }
-            logger.info("Done getting user data: " + top.getUsername());
+            followings = getFollowings(topId);
+            followers = getFollowers(topId);
+            posts = getPosts(topId);
+            likes = getLikes(posts);
+            comments = getComments(posts);
 
         } catch (InstagramRateLimitException e){
             logger.error(e.getMessage());
@@ -74,12 +69,15 @@ public class Explorer extends AbstractExplorer{
     protected void saveData() {
         logger.info("Adding user data: " + top.getUsername());
 
+        updateUser(top);
+        if (getFollowRelationshipCount(top.getUsername()) > top.getCounts().getFollowedBy() + top.getCounts().getFollows() + 15)
+            connection.executeAsync("MATCH ({username:'" + top.getUsername() +"'})-[r:Following]-() DELETE r");
+
         saveFollowings(top.getId(), followings);
         saveFollowers(top.getId(), followers);
         savePosts(posts);
         saveLikes(likes);
         saveComments(comments);
-        updateUser(top);
     }
 
     private String getAccessTokenForUser(String username) {
@@ -92,7 +90,13 @@ public class Explorer extends AbstractExplorer{
         if (!r.isEmpty()) {
             return (String) r.get(0).get("access_token");
         } else {
+            logger.info("No access_token found. Checking whether user is public: " + username);
             return Parameters.myToken;
         }
+    }
+
+    private long getFollowRelationshipCount(String user){
+        List<Map<String, Object>> res = connection.execute("MATCH ({username:'" + user +"'})-[r:Following]-() RETURN COUNT(r) AS count");
+        return Long.valueOf(res.get(0).get("count").toString());
     }
 }

@@ -29,6 +29,7 @@ public class Neo4jEmbed extends INeo4jConnection {
 
             logger.info("Database started.");
 
+            Thread queryRunner = new Thread(this, "Query Runner");
             queryRunner.start();
 
             registerShutdownHook(db);
