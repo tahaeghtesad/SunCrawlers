@@ -16,7 +16,8 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException, InstagramException, SQLException {
         Log logger = LogFactory.getLog(Main.class);
-        ExecutorService crawlersPool = Executors.newCachedThreadPool(new ThreadFactory() {
+        int NUMBER_OF_EXPLORERS = 6;
+        ExecutorService crawlersPool = Executors.newFixedThreadPool(NUMBER_OF_EXPLORERS,new ThreadFactory() {
             int count = 1;
             @Override
             public Thread newThread(@NotNull Runnable r) {
@@ -36,7 +37,6 @@ public class Main {
         feedExplorer.start();
 
         //starting crawlers
-        int NUMBER_OF_EXPLORERS = 6;
         for (int i = 0; i < NUMBER_OF_EXPLORERS; i++) {
             crawlersPool.submit(new Explorer(connection, queue));
         }
