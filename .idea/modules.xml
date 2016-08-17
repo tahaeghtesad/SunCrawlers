@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/lib/neo4j-jdbc/neo4j-jdbc.iml" filepath="$PROJECT_DIR$/lib/neo4j-jdbc/neo4j-jdbc.iml" />
       <module fileurl="file://$PROJECT_DIR$/yourgraph.iml" filepath="$PROJECT_DIR$/yourgraph.iml" />
     </modules>
   </component>
