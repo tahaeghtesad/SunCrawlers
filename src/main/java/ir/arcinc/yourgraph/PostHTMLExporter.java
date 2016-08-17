@@ -1,9 +1,11 @@
 package ir.arcinc.yourgraph;
 
+import org.jinstagram.entity.users.feed.MediaFeedData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -21,13 +23,41 @@ public class PostHTMLExporter implements Runnable{
     public PostHTMLExporter(INeo4jConnection connection) {
         this.connection = connection;
         Thread thisThread = new Thread(this,"HTML Exporter");
-        thisThread.start();
+//        thisThread.start();
+    }
+
+    public static void main(String[] args) throws SQLException {
+        PostHTMLExporter exporter = new PostHTMLExporter(new Neo4jEmbed());
+
+        exporter.saveUserPosts("___az_za___");
+        System.out.println("done");
     }
 
     public void saveUserPostsAsync(String username){
         try {
             queue.put(username);
         } catch (InterruptedException e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    public void saveUserPostsFromMap(List<MediaFeedData> posts){
+        if (posts.isEmpty())
+            return;
+
+        try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File("user_posts\\" + posts.get(0).getUser().getUserName() + ".html")), "UTF-8"))) {
+            out.println(
+                    "<!DOCTYPE HTML>" +
+                            "<html>" +
+                            "<head><meta charset=\"UTF-8\"/></head>" +
+                            "<body>");
+
+            for (MediaFeedData post : posts){
+                out.println("<img src=\"" + post.getImages().getStandardResolution() + "\"/>");
+            }
+
+            out.println("</body></html>");
+        } catch (FileNotFoundException | UnsupportedEncodingException e) {
             logger.error(e.getMessage());
         }
     }
@@ -46,8 +76,6 @@ public class PostHTMLExporter implements Runnable{
     }
 
     public void saveUserPosts(String username){
-            List<Map<String, Object>> urls = connection.execute("match ({username:'" + username + "'})-[r:Posted]->(p:Post{type:'image'}) return p.url;");
-
             try (PrintWriter out = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File("user_posts\\" + username + ".html")), "UTF-8"))) {
                 out.println(
                         "<!DOCTYPE HTML>" +
@@ -55,8 +83,16 @@ public class PostHTMLExporter implements Runnable{
                                 "<head><meta charset=\"UTF-8\"/></head>" +
                                 "<body>");
 
-                for (Map<String, Object> row : urls) {
-                    out.println("<img src=\"" + row.get("p.url") + "\" />");
+                for (Map<String, Object> post : connection.execute("match (u{username:'" + username + "'})-[:Posted]->(p{type:'image'}) return p.id,p.caption,p.url;")) {
+                    System.out.println(post.get("p.url"));
+                    out.println("<img src=\"" + post.get("p.url") + "\" />");
+                    out.println("\t<p>" + post.get("p.caption") + "</p>");
+                    out.println("\t<ul>");
+                    for (Map<String, Object> tagged : connection.execute("match (p{id:'" + post.get("p.id") + "'})<-[:AppearedIn]-(u) return u.username")){
+                        out.println("\t\t<li><a href=\"https://www.instagram.com/" + tagged.get("u.username") + "\">" + tagged.get("u.username") + "</a></li>");
+                        System.out.println(tagged.get("u.username"));
+                    }
+                    out.println("\t</ul>");
                 }
 
                 out.println("</body></html>");

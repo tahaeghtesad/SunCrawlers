@@ -1,8 +1,5 @@
 package ir.arcinc.yourgraph;
 
-import com.google.gson.Gson;
-import scala.util.parsing.json.JSONObject;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;

@@ -37,22 +37,14 @@ public abstract class AbstractExplorer implements Runnable {
         while (true){
 //            {
             try {
-                getData();
-
-//                synchronized (connection) {
-                    saveData();
-//                }
-
+                exploreAndSaveData();
             } catch (Exception e){
                 logger.error(e.getMessage());
             }
         }
     }
 
-    protected abstract void getData();
-
-    protected abstract void saveData();
-
+    protected abstract void exploreAndSaveData();
 
     private static String toString(UserFeedData data) {
         return String.format(

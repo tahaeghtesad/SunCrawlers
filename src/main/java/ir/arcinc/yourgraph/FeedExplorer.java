@@ -30,28 +30,26 @@ public class FeedExplorer extends AbstractExplorer {
     }
 
     @Override
-    protected void getData() {
+    protected void exploreAndSaveData() {
         try {
             logger.info("Getting news feed...");
             posts = instagram.getUserFeeds().getData();
+            savePosts(posts);
+            logger.trace("Getting likes...");
             likes = getLikes(posts);
+            saveLikes(likes);
+            logger.trace("Getting comments...");
             comments = getComments(posts);
+            saveComments(comments);
+            logger.trace("Updating users...");
             users = getPostingUsers(posts);
-            logger.info("Done getting newsfeed.");
+            updateUser(users);
+
+            end();
+
         } catch (InstagramException e) {
             logger.error(e.getMessage());
         }
-    }
-
-    @Override
-    protected void saveData() {
-        logger.info("Adding newsfeed data.");
-        savePosts(posts);
-        saveLikes(likes);
-        saveComments(comments);
-        updateUser(users);
-
-        end();
     }
 
     protected void end() {

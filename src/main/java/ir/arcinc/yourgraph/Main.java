@@ -33,16 +33,19 @@ public class Main {
         PostHTMLExporter exporter = new PostHTMLExporter(connection);
 
         //starting feedcrawler
-        Thread feedExplorer = new Thread(new FeedExplorer(connection), "Feed Explorer");
-        feedExplorer.start();
+//        Thread feedExplorer = new Thread(new FeedExplorer(connection), "Feed Explorer");
+//        feedExplorer.start();
 
+        //Exporter
         //starting crawlers
-        for (int i = 0; i < NUMBER_OF_EXPLORERS; i++) {
-            crawlersPool.submit(new Explorer(connection, queue));
-        }
-
+//        for (int i = 0; i < NUMBER_OF_EXPLORERS; i++) {
+//            crawlersPool.submit(new Explorer(connection, queue, exporter));
+//        }
         Thread consoleAdder = new Thread(new ConsoleAdder(connection, queue), "Console Adder");
         consoleAdder.start();
+
+        new Explorer(connection,queue,exporter).run();
+
 
         crawlersPool.shutdown();
     }

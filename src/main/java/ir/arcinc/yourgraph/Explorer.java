@@ -17,11 +17,13 @@ import java.util.concurrent.BlockingQueue;
 
 public class Explorer extends AbstractExplorer{
     private BlockingQueue<String> queue;
+    private PostHTMLExporter exporter;
 
-    public Explorer(INeo4jConnection connection, BlockingQueue<String> queue) {
+    public Explorer(INeo4jConnection connection, BlockingQueue<String> queue, PostHTMLExporter exporter) {
         super(connection);
         logger = LoggerFactory.getLogger(Explorer.class.getName());
         this.queue = queue;
+        this.exporter = exporter;
     }
 
     private UserInfoData top;
@@ -32,11 +34,11 @@ public class Explorer extends AbstractExplorer{
     private Map<MediaFeedData,List<CommentData>> comments = new HashMap<>();
 
     @Override
-    protected void getData() {
+    protected void exploreAndSaveData() {
         try {
             String topUsername = queue.take();
 
-            logger.info("Finding user: " + topUsername);
+            logger.info("Doing user: " + topUsername);
 
             String topId = findId(topUsername);
 
@@ -44,14 +46,25 @@ public class Explorer extends AbstractExplorer{
             instagram.setAccessToken(new Token(accessToken, Parameters.clientSecret));
 
             top = instagram.getUserInfo(topId).getData();
+            if (getFollowRelationshipCount(top.getUsername()) > top.getCounts().getFollowedBy() + top.getCounts().getFollows() + 15)
+                connection.executeAsync("MATCH ({username:'" + top.getUsername() +"'})-[r:Following]-() DELETE r");
 
-            logger.info("Getting user data: " + top.getUsername());
-
+            logger.trace("Getting user followings: " + top.getUsername());
             followings = getFollowings(topId);
+            saveFollowings(top.getId(), followings);
+            logger.trace("Getting user followers: " + top.getUsername());
             followers = getFollowers(topId);
+            saveFollowers(top.getId(), followers);
+            logger.trace("Getting user posts: " + top.getUsername());
             posts = getPosts(topId);
+            savePosts(posts);
+            exporter.saveUserPostsFromMap(posts);
+            logger.trace("Getting user likes: " + top.getUsername());
             likes = getLikes(posts);
+            saveLikes(likes);
+            logger.trace("Getting user comments: " + top.getUsername());
             comments = getComments(posts);
+            saveComments(comments);
 
         } catch (InstagramRateLimitException e){
             logger.error(e.getMessage());
@@ -65,28 +78,14 @@ public class Explorer extends AbstractExplorer{
         }
     }
 
-    @Override
-    protected void saveData() {
-        logger.info("Adding user data: " + top.getUsername());
-
-        updateUser(top);
-        if (getFollowRelationshipCount(top.getUsername()) > top.getCounts().getFollowedBy() + top.getCounts().getFollows() + 15)
-            connection.executeAsync("MATCH ({username:'" + top.getUsername() +"'})-[r:Following]-() DELETE r");
-
-        saveFollowings(top.getId(), followings);
-        saveFollowers(top.getId(), followers);
-        savePosts(posts);
-        saveLikes(likes);
-        saveComments(comments);
-    }
-
     private String getAccessTokenForUser(String username) {
-        List<Map<String, Object>> r = connection.execute("MATCH (p{username:'" + username + "'}) WHERE p.access_token IS NOT null RETURN p.access_token AS access_token");
+        List<Map<String, Object>> r = connection.execute("MATCH (p{username:'" + username + "'}) WHERE EXISTS(p.access_token) RETURN p.access_token AS access_token");
         if (!r.isEmpty()) {
             return (String) r.get(0).get("access_token");
         }
 
-        r = connection.execute("MATCH (p:Person)-[:Following]->(target{username:'" + username + "'}) WHERE p.access_token IS NOT null RETURN p.access_token AS access_token LIMIT 1;");
+        r = connection.execute("MATCH (p:Person)-[:Following]->(target{username:'" + username + "'}) WHERE EXISTS(p.access_token) RETURN p.access_token AS access_token LIMIT 1;");
+        System.out.println(r.get(0).get("access_token"));
         if (!r.isEmpty()) {
             return (String) r.get(0).get("access_token");
         } else {
